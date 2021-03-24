@@ -15,21 +15,23 @@ func main() {
 
 	cli.AppHelpTemplate = `{{.Name}} {{if .Version}}{{.Version}}{{end}}
 
-使用:
-	{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
-{{if .Commands}}
-命令:
-	{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
-选项:
-	{{range .VisibleFlags}}{{.}}
-	{{end}}{{end}}
-`
+	使用:
+		{{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+	{{if .Commands}}
+	命令:
+		{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t"}}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .VisibleFlags}}
+	选项:
+		{{range .VisibleFlags}}{{.}}
+		{{end}}{{end}}
+	`
 
 	app := &cli.App{
 		Name:    "DedeCMS Src Copy",
 		Version: "v1.0.0",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "title", Aliases: []string{"t"}, Usage: "以标题+目录名的方式设置PDF标题，目录名可以设置为版本号。"},
+			&cli.StringFlag{Name: "name", Aliases: []string{"n"}, Usage: "软件名。"},
+			&cli.StringFlag{Name: "shor", Aliases: []string{"s"}, Usage: "简称或英文名。"},
+			&cli.StringFlag{Name: "ver", Usage: "软件版本号。"},
 			&cli.StringFlag{Name: "path", Aliases: []string{"p"}, Usage: "源文件位置。"},
 			&cli.StringFlag{Name: "files", Value: "*.php,*.htm", Aliases: []string{"f"}, Usage: "文件列表，用','进行分割，可使用通配符，如：'*.go'。"},
 			&cli.BoolFlag{Name: "dir", Value: false, Aliases: []string{"d"}, Usage: "自动对当前目录下的子目录进行批处理。"},
@@ -42,15 +44,15 @@ func main() {
 			}
 
 			exts := snake.Text(c.String("files")).Split(",")
-
+			n := c.String("name") + " [简称：" + c.String("shor") + "] " + c.String("ver")
 			if c.Bool("dir") {
 				for _, l := range snake.FS(path).Ls() {
 					if i := snake.FS(l); i.IsDir() && strings.Index(i.Get(), ".") != 0 {
-						savePDF(mergeCodes(l, exts...), c.String("title"), l)
+						savePDF(mergeCodes(l, exts...), n, l)
 					}
 				}
 			} else {
-				savePDF(mergeCodes(path, exts...), c.String("title"), path)
+				savePDF(mergeCodes(path, exts...), n, path)
 			}
 
 			return nil
@@ -65,21 +67,23 @@ func main() {
 }
 
 // 保存Docx文件
-func savePDF(src, title, out string) {
+func savePDF(src, name, out string) {
 	f := snake.Text(src).ReComment()
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddUTF8Font("NotoSansSC", "", "./font/NotoSansSC-Regular.ttf")
+	name = snake.Text(name).Trim(" ").Get() + " " + snake.FS(out).Base()
+	name = snake.Text(name).Trim(" ").Get()
 
-	titleStr := title + " " + snake.FS(out).Base()
-	titleStr = snake.Text(titleStr).Trim(" ").Get()
-
-	pdf.SetTitle(titleStr, false)
+	pdf.SetTitle(name, false)
 	pdf.SetAuthor("Jules Verne", false)
 	pdf.SetHeaderFunc(func() {
 		pdf.SetFont("NotoSansSC", "", 12)
 		pdf.SetLineWidth(0.1)
 		pdf.Line(200, 14, 10, 14)
-		pdf.Cell(0, 0, titleStr)
+		pdf.Cell(-1, 0, name)
+		pdf.SetFont("NotoSansSC", "", 8)
+		pdf.SetTextColor(128, 128, 128)
+		pdf.CellFormat(0, 0, fmt.Sprintf("第 %d 页", pdf.PageNo()), "", 0, "R", false, 0, "")
 		pdf.Ln(10)
 	})
 
@@ -97,18 +101,9 @@ func savePDF(src, title, out string) {
 
 	for _, line := range f.Lines() {
 		t := snake.Text(line).Trim(" ").Trim("	").Trim("	").Trim(" ")
-
-		ls := len(t.Get()) / 158
-		if ls > 0 && len(t.Get())%158 != 0 {
-			ls = ls + 1
-		}
-
-		if ls > 0 {
-			spi := []int{}
-			for i := 0; i < ls; i++ {
-				spi = append(spi, 158*(i+1))
-			}
-			for _, v := range t.SplitPlace(spi) {
+		l := len(t.Get())
+		if l >= 150 {
+			for _, v := range t.SplitInt(150) {
 				pdf.Cell(0, 0, v)
 				pdf.Ln(3)
 			}
@@ -118,7 +113,7 @@ func savePDF(src, title, out string) {
 		}
 
 	}
-	pdf.OutputFileAndClose(out + "/../" + titleStr + ".pdf")
+	pdf.OutputFileAndClose(out + "/../" + name + ".pdf")
 }
 
 // 根据目录，将所选择的文件合并.
