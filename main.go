@@ -69,10 +69,13 @@ func main() {
 // 保存Docx文件
 func savePDF(src, name, out string) {
 	f := snake.Text(src).ReComment()
+
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddUTF8Font("NotoSansSC", "", "./font/NotoSansSC-Regular.ttf")
 	name = snake.Text(name).Trim(" ").Get() + " " + snake.FS(out).Base()
 	name = snake.Text(name).Trim(" ").Get()
+
+	fmt.Println(name, "总行数：", len(f.Lines()))
 
 	pdf.SetTitle(name, false)
 	pdf.SetAuthor("Jules Verne", false)
