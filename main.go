@@ -48,7 +48,14 @@ func main() {
 			}
 
 			exts := snake.Text(c.String("files")).Split(",")
-			n := c.String("name") + " [简称：" + c.String("shor") + "] " + c.String("ver")
+			var n string
+			if c.String("ver") == "" {
+				n = c.String("name") + " [简称：" + c.String("shor") + "] " + snake.FS(path).Base()
+			} else {
+
+				n = c.String("name") + " [简称：" + c.String("shor") + "] " + c.String("ver")
+			}
+
 			if c.Bool("dir") {
 				for _, l := range snake.FS(path).Ls() {
 					if i := snake.FS(l); i.IsDir() && strings.Index(i.Get(), ".") != 0 {
@@ -76,7 +83,6 @@ func savePDF(src, name, out string, sp, lp int) {
 
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddUTF8Font("NotoSansSC", "", "./font/NotoSansSC-Regular.ttf")
-	name = snake.Text(name).Trim(" ").Get() + " " + snake.FS(out).Base()
 	name = snake.Text(name).Trim(" ").Get()
 	lsc := len(f.Lines())
 	fmt.Println(name, "总行数：", lsc)
@@ -141,6 +147,7 @@ func savePDF(src, name, out string, sp, lp int) {
 // 根据目录，将所选择的文件合并.
 func mergeCodes(path string, exts ...string) string {
 	src := ""
+	fmt.Println(path, exts)
 	for _, f := range snake.FS(path).Find(exts...) {
 		if t, ok := snake.FS(f).Open(); ok {
 			src += t.Text().Get()
