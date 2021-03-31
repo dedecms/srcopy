@@ -147,7 +147,6 @@ func savePDF(src, name, out string, sp, lp int) {
 // 根据目录，将所选择的文件合并.
 func mergeCodes(path string, exts ...string) string {
 	src := ""
-	fmt.Println(path, exts)
 	for _, f := range snake.FS(path).Find(exts...) {
 		if t, ok := snake.FS(f).Open(); ok {
 			src += t.Text().Get()
