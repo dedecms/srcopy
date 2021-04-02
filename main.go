@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dedecms/srcopy/snake"
+	"github.com/dedecms/snake"
 	"github.com/jung-kurt/gofpdf"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/urfave/cli/v2"
@@ -28,7 +28,7 @@ func main() {
 	`
 
 	app := &cli.App{
-		Name:    "DedeCMS Src Copy",
+		Name:    "DedeCMS Src Copyright",
 		Version: "v1.0.0",
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "name", Aliases: []string{"n"}, Usage: "软件名。"},
