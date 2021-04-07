@@ -49,22 +49,19 @@ func main() {
 
 			exts := snake.Text(c.String("files")).Split(",")
 			var n string
+			n = c.String("name") + " [简称：" + c.String("shor") + "] "
 
 			if c.Bool("dir") {
 				for _, l := range snake.FS(path).Ls() {
-
-					if c.String("ver") == "" {
-						n = c.String("name") + " [简称：" + c.String("shor") + "] " + snake.FS(l).Base()
-					} else {
-						n = c.String("name") + " [简称：" + c.String("shor") + "] " + c.String("ver")
-					}
-
+					n = n + snake.FS(l).Base()
 					if i := snake.FS(l); i.IsDir() && strings.Index(i.Get(), ".") != 0 {
 
 						savePDF(mergeCodes(l, exts...), n, l, c.Int("sp"), c.Int("lp"))
 					}
 				}
 			} else {
+
+				n = n + c.String("ver")
 				savePDF(mergeCodes(path, exts...), n, path, c.Int("sp"), c.Int("lp"))
 			}
 
